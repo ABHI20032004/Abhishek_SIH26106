@@ -19,6 +19,7 @@ import RiskBadge from "../components/RiskBadge";
 import {
   getDocuments,
   getInspections,
+  getDashboardStats,
 } from "../services/api";
 
 
@@ -33,6 +34,15 @@ export default function Dashboard() {
   const [loading, setLoading] =
     useState(true);
 
+    const [dashboardStats, setDashboardStats] =
+  useState({
+    open_findings: 0,
+    critical_risks: 0,
+    corrective_actions: 0,
+    open_actions: 0,
+    in_progress_actions: 0,
+    resolved_actions: 0,
+  });
 
   // =====================================================
   // LOAD DASHBOARD DATA
@@ -44,25 +54,40 @@ export default function Dashboard() {
 
       setLoading(true);
 
-      const [
-        documentData,
-        inspectionData,
-      ] = await Promise.all([
+const [
+  documentData,
+  inspectionData,
+  statsData,
+] = await Promise.all([
 
-        getDocuments(),
+  getDocuments(),
 
-        getInspections(),
+  getInspections(),
 
-      ]);
+  getDashboardStats(),
+
+]);
 
 
-      setDocuments(
-        documentData.documents || []
-      );
+setDocuments(
+  documentData.documents || []
+);
 
-      setInspections(
-        inspectionData.inspections || []
-      );
+setInspections(
+  inspectionData.inspections || []
+);
+
+setDashboardStats(
+  statsData || {}
+);
+
+setInspections(
+  inspectionData.inspections || []
+);
+
+setDashboardStats(
+  statsData || {}
+);
 
     } catch (error) {
 
@@ -263,29 +288,52 @@ export default function Dashboard() {
 
 
         <StatCard
-          title="Open Findings"
-          value="0"
-          description="From completed inspections"
-          icon={AlertTriangle}
-          color="orange"
-        />
+  title="Open Findings"
+  value={
+    loading
+      ? "..."
+      : dashboardStats.open_findings
+  }
+  description={
+    dashboardStats.open_findings > 0
+      ? "Requires attention"
+      : "No open findings"
+  }
+  icon={AlertTriangle}
+  color="orange"
+/>
 
 
-        <StatCard
-          title="Critical Risks"
-          value={
-            loading
-              ? "..."
-              : highRiskInspections.length
-          }
-          description={
-            highRiskInspections.length > 0
-              ? "Requires attention"
-              : "No critical risks"
-          }
-          icon={ShieldAlert}
-          color="red"
-        />
+        {/* <StatCard
+  title="Critical Risks"
+  value={
+    loading
+      ? "..."
+      : dashboardStats.critical_risks
+  }
+  description={
+    dashboardStats.critical_risks > 0
+      ? "Requires attention"
+      : "No critical risks"
+  }
+  icon={ShieldAlert}
+  color="red"
+/> */}
+
+<StatCard
+  title="Corrective Actions"
+  value={
+    loading
+      ? "..."
+      : dashboardStats.open_actions
+  }
+  description={
+    dashboardStats.open_actions > 0
+      ? `${dashboardStats.open_actions} open`
+      : "No pending actions"
+  }
+  icon={ClipboardCheck}
+/>
 
       </div>
 

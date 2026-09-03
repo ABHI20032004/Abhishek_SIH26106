@@ -11,6 +11,7 @@ import {
 import {
   getInspections,
   updateFindingStatus,
+  createCorrectiveAction,
 } from "../services/api";
 
 import { useEffect, useMemo, useState } from "react";
@@ -143,6 +144,72 @@ export default function Findings() {
     loadFindings();
 
   }, []);
+
+
+
+const [showActionForm, setShowActionForm] =
+  useState(false);
+
+const [actionSaving, setActionSaving] =
+  useState(false);
+
+const [actionForm, setActionForm] = useState({
+  title: "",
+  assigned_to: "",
+  priority: "MEDIUM",
+  due_date: "",
+  notes: "",
+});
+
+
+async function handleCreateAction() {
+  if (!selectedFinding) return;
+
+  if (!actionForm.title.trim()) {
+    alert("Please enter an action title");
+    return;
+  }
+
+  try {
+    setActionSaving(true);
+
+    await createCorrectiveAction({
+      finding_id: selectedFinding.id,
+      title: actionForm.title.trim(),
+      assigned_to:
+        actionForm.assigned_to.trim() || null,
+      priority: actionForm.priority,
+      due_date: actionForm.due_date || null,
+      notes: actionForm.notes.trim() || null,
+    });
+
+    alert("Corrective action created successfully");
+
+    setActionForm({
+      title: "",
+      assigned_to: "",
+      priority: "MEDIUM",
+      due_date: "",
+      notes: "",
+    });
+
+    setShowActionForm(false);
+
+  } catch (error) {
+    console.error(
+      "Create corrective action failed:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Failed to create corrective action"
+    );
+
+  } finally {
+    setActionSaving(false);
+  }
+}
 
 
 
@@ -907,18 +974,198 @@ async function handleStatusChange(
             </div>
 
 
+            {showActionForm && (
+
+  <div className="corrective-action-form">
+
+    <div className="detail-block-title">
+      CREATE CORRECTIVE ACTION
+    </div>
+
+    <div className="action-form-grid">
+
+      <div className="form-group">
+
+        <label>
+          Action Title
+        </label>
+
+        <input
+          type="text"
+          placeholder="Describe the corrective action"
+          value={actionForm.title}
+          onChange={(event) =>
+            setActionForm({
+              ...actionForm,
+              title: event.target.value,
+            })
+          }
+        />
+
+      </div>
+
+
+      <div className="form-group">
+
+        <label>
+          Assigned To
+        </label>
+
+        <input
+          type="text"
+          placeholder="Person responsible"
+          value={actionForm.assigned_to}
+          onChange={(event) =>
+            setActionForm({
+              ...actionForm,
+              assigned_to:
+                event.target.value,
+            })
+          }
+        />
+
+      </div>
+
+
+      <div className="form-group">
+
+        <label>
+          Priority
+        </label>
+
+        <select
+          value={actionForm.priority}
+          onChange={(event) =>
+            setActionForm({
+              ...actionForm,
+              priority:
+                event.target.value,
+            })
+          }
+        >
+
+          <option value="LOW">
+            Low
+          </option>
+
+          <option value="MEDIUM">
+            Medium
+          </option>
+
+          <option value="HIGH">
+            High
+          </option>
+
+          <option value="CRITICAL">
+            Critical
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div className="form-group">
+
+        <label>
+          Due Date
+        </label>
+
+        <input
+          type="date"
+          value={actionForm.due_date}
+          onChange={(event) =>
+            setActionForm({
+              ...actionForm,
+              due_date:
+                event.target.value,
+            })
+          }
+        />
+
+      </div>
+
+
+      <div
+        className="form-group"
+        style={{
+          gridColumn: "1 / -1",
+        }}
+      >
+
+        <label>
+          Notes
+        </label>
+
+        <textarea
+          rows="3"
+          placeholder="Additional instructions or notes"
+          value={actionForm.notes}
+          onChange={(event) =>
+            setActionForm({
+              ...actionForm,
+              notes:
+                event.target.value,
+            })
+          }
+        />
+
+      </div>
+
+    </div>
+
+
+    <div className="action-form-buttons">
+
+      <button
+        className="btn btn-secondary"
+        onClick={() =>
+          setShowActionForm(false)
+        }
+        disabled={actionSaving}
+      >
+        Cancel
+      </button>
+
+
+      <button
+        className="btn btn-primary"
+        onClick={handleCreateAction}
+        disabled={actionSaving}
+      >
+
+        {actionSaving
+          ? "Creating..."
+          : "Create Action"}
+
+      </button>
+
+    </div>
+
+  </div>
+
+)}
+
+
             <div className="modal-actions">
 
-              <button
+            <button
                 className="btn btn-secondary"
                 onClick={() =>
-                  setSelectedFinding(null)
+                setSelectedFinding(null)
                 }
-              >
-
+            >
                 Close
+            </button>
 
-              </button>
+            <button
+                className="btn btn-primary"
+                onClick={() =>
+                setShowActionForm(true)
+                }
+            >
+                Create Corrective Action
+            </button>
 
             </div>
 

@@ -13,6 +13,12 @@ from .routes.inspections import router as inspections_router
 
 from .routes.findings import router as findings_router
 
+from .routes.corrective_actions import router as corrective_actions_router
+
+from .routes.dashboard import router as dashboard_router
+
+from .routes.reports import router as reports_router
+
 
 # =====================================================
 # CREATE DATABASE TABLES
@@ -74,6 +80,18 @@ app.include_router(
 
 app.include_router(
     findings_router
+)
+
+app.include_router(
+    corrective_actions_router
+)
+
+app.include_router(
+    dashboard_router
+)
+
+app.include_router(
+    reports_router
 )
 
 

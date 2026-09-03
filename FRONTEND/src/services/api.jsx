@@ -349,3 +349,101 @@ export async function updateFindingStatus(
 
   return data;
 }
+
+
+
+export async function createCorrectiveAction(data) {
+  const response = await fetch(
+    `${API_URL}/api/corrective-actions`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(data),
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.detail ||
+      "Failed to create corrective action"
+    );
+  }
+
+  return result;
+}
+
+
+export async function getCorrectiveActions() {
+  const response = await fetch(
+    `${API_URL}/api/corrective-actions`
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      "Failed to load corrective actions"
+    );
+  }
+
+  return data;
+}
+
+
+export async function updateCorrectiveActionStatus(
+  actionId,
+  status
+) {
+  const response = await fetch(
+    `${API_URL}/api/corrective-actions/${actionId}/status`,
+    {
+      method: "PATCH",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        status,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      "Failed to update action status"
+    );
+  }
+
+  return data;
+}
+
+
+export async function getDashboardStats() {
+
+  const response = await fetch(
+    `${API_URL}/api/dashboard/stats`
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      "Failed to load dashboard statistics"
+    );
+  }
+
+  return data;
+}
+
