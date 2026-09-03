@@ -1,0 +1,146 @@
+const API_URL = "http://127.0.0.1:8000";
+
+
+// =====================================================
+// GET DOCUMENTS
+// =====================================================
+
+export async function getDocuments() {
+  const response = await fetch(
+    `${API_URL}/api/documents`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to fetch documents"
+    );
+  }
+
+  return response.json();
+}
+
+
+// =====================================================
+// UPLOAD SINGLE DOCUMENT
+// =====================================================
+
+export async function uploadDocument(file) {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  const response = await fetch(
+    `${API_URL}/api/documents/upload`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      "Document upload failed"
+    );
+  }
+
+  return data;
+}
+
+
+// =====================================================
+// UPLOAD MULTIPLE DOCUMENTS
+// =====================================================
+
+export async function uploadDocuments(files) {
+  const results = [];
+
+  for (const file of files) {
+    try {
+      const result =
+        await uploadDocument(file);
+
+      results.push({
+        file: file.name,
+        success: true,
+        ...result,
+      });
+
+    } catch (error) {
+
+      results.push({
+        file: file.name,
+        success: false,
+        error:
+          error.message ||
+          "Upload failed",
+      });
+
+    }
+  }
+
+  return results;
+}
+
+
+// =====================================================
+// DELETE DOCUMENT
+// =====================================================
+
+export async function deleteDocument(
+  documentId
+) {
+  const response = await fetch(
+    `${API_URL}/api/documents/${documentId}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      "Failed to delete document"
+    );
+  }
+
+  return data;
+}
+
+
+// =====================================================
+// CHAT
+// =====================================================
+
+export async function sendChatMessage(data) {
+  const response = await fetch(
+    "http://127.0.0.1:8000/api/chat",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        message: data.message,
+      }),
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.detail ||
+      "Failed to get AI response"
+    );
+  }
+
+  return result;
+}
