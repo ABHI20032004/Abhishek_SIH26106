@@ -144,3 +144,208 @@ export async function sendChatMessage(data) {
 
   return result;
 }
+
+
+// =====================================================
+// INSPECTIONS
+// =====================================================
+
+export async function getInspections() {
+
+  const response = await fetch(
+    "http://127.0.0.1:8000/api/inspections"
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Failed to load inspections"
+    );
+  }
+
+  return data;
+}
+
+
+export async function getInspection(id) {
+
+  const response = await fetch(
+    `http://127.0.0.1:8000/api/inspections/${id}`
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Failed to load inspection"
+    );
+  }
+
+  return data;
+}
+
+
+export async function createInspection(inspection) {
+
+  const response = await fetch(
+    "http://127.0.0.1:8000/api/inspections",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(inspection),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Failed to create inspection"
+    );
+  }
+
+  return data;
+}
+
+
+export async function updateInspection(
+  id,
+  inspection
+) {
+
+  const response = await fetch(
+    `http://127.0.0.1:8000/api/inspections/${id}`,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(inspection),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Failed to update inspection"
+    );
+  }
+
+  return data;
+}
+
+
+export async function deleteInspection(id) {
+
+  const response = await fetch(
+    `http://127.0.0.1:8000/api/inspections/${id}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Failed to delete inspection"
+    );
+  }
+
+  return data;
+}
+
+
+export async function analyzeInspection(
+  inspectionId
+) {
+  const response = await fetch(
+    `${API_URL}/api/inspections/${inspectionId}/analyze`,
+    {
+      method: "POST",
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      "Failed to analyze inspection"
+    );
+  }
+
+  return data;
+}
+
+
+// ================================
+// GET INSPECTION FINDINGS
+// ================================
+
+// ================================
+// GET INSPECTION FINDINGS
+// ================================
+
+export async function getInspectionFindings(inspectionId) {
+  const response = await fetch(
+    `${API_URL}/api/inspections/${inspectionId}/findings`
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Failed to load inspection findings"
+    );
+  }
+
+  return data;
+}
+
+
+export async function updateFindingStatus(
+  findingId,
+  status
+) {
+
+  const response = await fetch(
+    `${API_URL}/api/findings/${findingId}/status`,
+    {
+      method: "PATCH",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        status,
+      }),
+    }
+  );
+
+
+  const data =
+    await response.json();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data.detail ||
+      "Failed to update finding status"
+    );
+
+  }
+
+
+  return data;
+}

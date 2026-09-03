@@ -7,6 +7,12 @@ from . import models
 from .routes.documents import router as documents_router
 from .routes.chat import router as chat_router
 
+from .routes.inspections import router as inspections_router
+
+from .routes.inspections import router as inspections_router
+
+from .routes.findings import router as findings_router
+
 
 # =====================================================
 # CREATE DATABASE TABLES
@@ -56,6 +62,18 @@ app.include_router(
 
 app.include_router(
     chat_router
+)
+
+app.include_router(
+    inspections_router
+)
+
+app.include_router(
+    inspections_router
+)
+
+app.include_router(
+    findings_router
 )
 
 

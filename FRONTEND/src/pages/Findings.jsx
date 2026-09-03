@@ -1,16 +1,320 @@
 import {
-  SearchCheck,
-  Filter,
+  AlertTriangle,
+  CheckCircle2,
+  FileText,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+  X,
 } from "lucide-react";
 
-import FindingCard from "../components/FindingCard";
+import {
+  getInspections,
+  updateFindingStatus,
+} from "../services/api";
+
+import { useEffect, useMemo, useState } from "react";
+
+
 
 export default function Findings() {
 
-  const findings = [];
+  const [findings, setFindings] = useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [severity, setSeverity] =
+    useState("ALL");
+
+  const [status, setStatus] =
+    useState("ALL");
+
+  const [selectedFinding, setSelectedFinding] =
+    useState(null);
+
+
+  /* =====================================================
+     LOAD FINDINGS
+  ===================================================== */
+
+  async function loadFindings() {
+
+    try {
+
+      setLoading(true);
+      setError("");
+
+      const data =
+        await getInspections();
+
+      const inspections =
+        data.inspections || [];
+
+      const allFindings = [];
+
+
+      /*
+       * Each inspection already has its own
+       * findings endpoint.
+       *
+       * Load findings for every inspection.
+       */
+
+      for (const inspection of inspections) {
+
+        try {
+
+          const response =
+            await fetch(
+              `http://127.0.0.1:8000/api/inspections/${inspection.id}/findings`
+            );
+
+          if (!response.ok) {
+            continue;
+          }
+
+          const result =
+            await response.json();
+
+          const inspectionFindings =
+            result.findings || [];
+
+
+          inspectionFindings.forEach(
+            (finding) => {
+
+              allFindings.push({
+
+                ...finding,
+
+                inspection_id:
+                  inspection.id,
+
+                inspection_title:
+                  inspection.title ||
+                  `Inspection #${inspection.id}`,
+
+              });
+
+            }
+          );
+
+        } catch (err) {
+
+          console.error(
+            `Failed to load findings for inspection ${inspection.id}`,
+            err
+          );
+
+        }
+
+      }
+
+
+      setFindings(allFindings);
+
+    } catch (err) {
+
+      console.error(err);
+
+      setError(
+        err.message ||
+        "Failed to load findings"
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  }
+
+
+  useEffect(() => {
+
+    loadFindings();
+
+  }, []);
+
+
+
+///////   handle status change
+async function handleStatusChange(
+  finding,
+  newStatus
+) {
+  try {
+
+    await updateFindingStatus(
+      finding.id,
+      newStatus
+    );
+
+    setFindings((current) =>
+      current.map((item) =>
+        item.id === finding.id
+          ? {
+              ...item,
+              status: newStatus,
+            }
+          : item
+      )
+    );
+
+    setSelectedFinding((current) =>
+      current &&
+      current.id === finding.id
+        ? {
+            ...current,
+            status: newStatus,
+          }
+        : current
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Status update failed:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Failed to update status"
+    );
+  }
+}
+
+
+  /* =====================================================
+     FILTER FINDINGS
+  ===================================================== */
+
+  const filteredFindings =
+    useMemo(() => {
+
+      const query =
+        search
+          .trim()
+          .toLowerCase();
+
+
+      return findings.filter(
+        (finding) => {
+
+          const findingSeverity =
+            (
+              finding.severity ||
+              "LOW"
+            ).toUpperCase();
+
+
+          const findingStatus =
+            (
+              finding.status ||
+              "OPEN"
+            ).toUpperCase();
+
+
+          const matchesSeverity =
+            severity === "ALL" ||
+            findingSeverity === severity;
+
+
+          const matchesStatus =
+            status === "ALL" ||
+            findingStatus === status;
+
+
+          const matchesSearch =
+            !query ||
+            [
+              finding.title,
+              finding.description,
+              finding.category,
+              finding.recommendation,
+              finding.source_document,
+              finding.inspection_title,
+            ]
+              .filter(Boolean)
+              .some((value) =>
+                String(value)
+                  .toLowerCase()
+                  .includes(query)
+              );
+
+
+          return (
+            matchesSeverity &&
+            matchesStatus &&
+            matchesSearch
+          );
+
+        }
+      );
+
+    }, [
+      findings,
+      search,
+      severity,
+      status,
+    ]);
+
+
+  /* =====================================================
+     COUNTS
+  ===================================================== */
+
+  const criticalCount =
+    findings.filter(
+      (item) =>
+        item.severity?.toUpperCase() ===
+        "CRITICAL"
+    ).length;
+
+
+  const highCount =
+    findings.filter(
+      (item) =>
+        item.severity?.toUpperCase() ===
+        "HIGH"
+    ).length;
+
+
+  const openCount =
+    findings.filter(
+      (item) =>
+        (
+          item.status || "OPEN"
+        ).toUpperCase() ===
+        "OPEN"
+    ).length;
+
+
+  const resolvedCount =
+    findings.filter(
+      (item) =>
+        (
+          item.status || ""
+        ).toUpperCase() ===
+        "RESOLVED"
+    ).length;
+
 
   return (
     <div>
+
+      {/* =================================================
+          HEADER
+      ================================================= */}
 
       <div className="page-header">
 
@@ -20,81 +324,643 @@ export default function Findings() {
             Findings
           </h1>
 
-          <p className="page-description">
-            Identify and track inspection findings.
+          <div className="page-description">
+            Review and manage AI-detected
+            inspection findings.
+          </div>
+
+        </div>
+
+
+        <div className="actions">
+
+          <button
+            className="btn btn-secondary"
+            onClick={loadFindings}
+            disabled={loading}
+          >
+
+            <RefreshCw
+              size={14}
+              className={
+                loading
+                  ? "spin"
+                  : ""
+              }
+            />
+
+            Refresh
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      {/* =================================================
+          ERROR
+      ================================================= */}
+
+      {error && (
+
+        <div
+          className="card"
+          style={{
+            padding: 13,
+            marginBottom: 18,
+            color: "#b91c1c",
+            background: "#fef2f2",
+            fontSize: 11,
+          }}
+        >
+
+          {error}
+
+        </div>
+
+      )}
+
+
+      {/* =================================================
+          SUMMARY
+      ================================================= */}
+
+      <div className="findings-summary-grid">
+
+        <FindingStat
+          label="Total Findings"
+          value={findings.length}
+          icon={AlertTriangle}
+        />
+
+        <FindingStat
+          label="Open"
+          value={openCount}
+          icon={AlertTriangle}
+        />
+
+        <FindingStat
+          label="High Risk"
+          value={
+            highCount +
+            criticalCount
+          }
+          icon={ShieldAlert}
+        />
+
+        <FindingStat
+          label="Resolved"
+          value={resolvedCount}
+          icon={CheckCircle2}
+        />
+
+      </div>
+
+
+      {/* =================================================
+          FILTERS
+      ================================================= */}
+
+      <div className="card findings-toolbar">
+
+        <div className="finding-search">
+
+          <Search size={15} />
+
+          <input
+            type="text"
+            placeholder="Search findings..."
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+          />
+
+          {search && (
+
+            <button
+              className="search-clear"
+              onClick={() =>
+                setSearch("")
+              }
+            >
+
+              <X size={13} />
+
+            </button>
+
+          )}
+
+        </div>
+
+
+        <div className="finding-filters">
+
+          <select
+            value={severity}
+            onChange={(event) =>
+              setSeverity(
+                event.target.value
+              )
+            }
+          >
+
+            <option value="ALL">
+              All Severities
+            </option>
+
+            <option value="CRITICAL">
+              Critical
+            </option>
+
+            <option value="HIGH">
+              High
+            </option>
+
+            <option value="MEDIUM">
+              Medium
+            </option>
+
+            <option value="LOW">
+              Low
+            </option>
+
+          </select>
+
+
+          <select
+            value={status}
+            onChange={(event) =>
+              setStatus(
+                event.target.value
+              )
+            }
+          >
+
+            <option value="ALL">
+              All Status
+            </option>
+
+            <option value="OPEN">
+              Open
+            </option>
+
+            <option value="IN PROGRESS">
+              In Progress
+            </option>
+
+            <option value="RESOLVED">
+              Resolved
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      {/* =================================================
+          RESULTS
+      ================================================= */}
+
+      {loading ? (
+
+        <div className="card empty-state">
+
+          <RefreshCw
+            size={22}
+            className="spin"
+          />
+
+          <strong>
+            Loading findings...
+          </strong>
+
+        </div>
+
+      ) : filteredFindings.length === 0 ? (
+
+        <div className="card empty-state">
+
+          <div className="empty-icon">
+
+            <CheckCircle2 size={22} />
+
+          </div>
+
+          <strong>
+            No findings found
+          </strong>
+
+          <p>
+            {findings.length === 0
+              ? "Analyze an inspection to generate AI findings."
+              : "Try changing your search or filters."}
           </p>
 
         </div>
 
-        <button className="btn btn-secondary">
-          <Filter size={14} />
-          Filters
-        </button>
+      ) : (
 
-      </div>
+        <div className="card">
+
+          <div className="table-wrapper">
+
+            <table className="data-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Finding
+                  </th>
+
+                  <th>
+                    Inspection
+                  </th>
+
+                  <th>
+                    Severity
+                  </th>
+
+                  <th>
+                    Category
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    Source
+                  </th>
+
+                </tr>
+
+              </thead>
 
 
-      <div className="stats-grid">
+              <tbody>
 
-        <Mini title="Critical" value="0" />
+                {filteredFindings.map(
+                  (finding, index) => (
 
-        <Mini title="High" value="0" />
+                    <tr
+                      key={
+                        finding.id ||
+                        `${finding.inspection_id}-${index}`
+                      }
+                      className="finding-row"
+                      onClick={() =>
+                        setSelectedFinding(
+                          finding
+                        )
+                      }
+                    >
 
-        <Mini title="Medium" value="0" />
+                      <td>
 
-        <Mini title="Low" value="0" />
+                        <div className="finding-table-title">
 
-      </div>
+                          <strong>
+                            {finding.title ||
+                              "Inspection Finding"}
+                          </strong>
+
+                          <span>
+                            {finding.description
+                              ? finding.description.slice(
+                                  0,
+                                  80
+                                ) +
+                                (
+                                  finding.description
+                                    .length > 80
+                                    ? "..."
+                                    : ""
+                                )
+                              : "No description"}
+                          </span>
+
+                        </div>
+
+                      </td>
 
 
-      <div
-        style={{
-          marginTop: 18,
-        }}
-      >
+                      <td>
 
-        {findings.length === 0 ? (
+                        <span className="inspection-name">
 
-          <div className="card empty-state">
+                          {finding.inspection_title}
 
-            <div className="empty-icon">
-              <SearchCheck size={23} />
-            </div>
+                        </span>
 
-            <strong>
-              No findings
-            </strong>
+                      </td>
 
-            <p>
-              AI-generated and manually identified
-              findings will appear here.
-            </p>
+
+                      <td>
+
+                        <SeverityBadge
+                          severity={
+                            finding.severity
+                          }
+                        />
+
+                      </td>
+
+
+                      <td>
+
+                        <span className="category-badge">
+
+                          {finding.category ||
+                            "General"}
+
+                        </span>
+
+                      </td>
+
+
+                      <td>
+
+                        <StatusBadge
+                          status={
+                            finding.status
+                          }
+                        />
+
+                      </td>
+
+
+                      <td>
+
+                        <div className="source-cell">
+
+                          <FileText size={13} />
+
+                          <span>
+
+                            {finding.source_document ||
+                              (
+                                finding.page_number
+                                  ? `Page ${finding.page_number}`
+                                  : "Document"
+                              )}
+
+                          </span>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )}
+
+              </tbody>
+
+            </table>
 
           </div>
 
-        ) : (
+        </div>
+
+      )}
+
+
+      {/* =================================================
+          DETAIL MODAL
+      ================================================= */}
+
+      {selectedFinding && (
+
+        <div
+          className="modal-overlay"
+          onClick={() =>
+            setSelectedFinding(null)
+          }
+        >
 
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill,minmax(300px,1fr))",
-              gap: 15,
-            }}
+            className="modal finding-detail-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
 
-            {findings.map(
-              (finding) => (
-                <FindingCard
-                  key={finding.id}
-                  finding={finding}
+            <div className="modal-header">
+
+              <div>
+
+                <div className="hero-label">
+                  INSPECTION FINDING
+                </div>
+
+                <h2>
+                  {selectedFinding.title ||
+                    "Finding"}
+                </h2>
+
+              </div>
+
+
+              <button
+                className="modal-close"
+                onClick={() =>
+                  setSelectedFinding(null)
+                }
+              >
+
+                <X size={17} />
+
+              </button>
+
+            </div>
+
+
+            <div className="finding-detail-body">
+
+              <div className="detail-badges">
+
+                <SeverityBadge
+                  severity={
+                    selectedFinding.severity
+                  }
                 />
-              )
-            )}
+
+                <StatusBadge
+                  status={
+                    selectedFinding.status
+                  }
+                />
+
+                <span className="category-badge">
+
+                  {selectedFinding.category ||
+                    "General"}
+
+                </span>
+
+              </div>
+
+              <div className="status-control">
+
+                <label>Finding Status</label>
+
+                <select
+                    value={
+                    (
+                        selectedFinding.status || "OPEN"
+                    ).toUpperCase()
+                    }
+                    onChange={(event) =>
+                    handleStatusChange(
+                        selectedFinding,
+                        event.target.value
+                    )
+                    }
+                >
+                    <option value="OPEN">
+                    Open
+                    </option>
+
+                    <option value="IN PROGRESS">
+                    In Progress
+                    </option>
+
+                    <option value="RESOLVED">
+                    Resolved
+                    </option>
+                </select>
+
+                </div>
+
+
+              <DetailBlock
+                title="Description"
+                value={
+                  selectedFinding.description ||
+                  "No description provided."
+                }
+              />
+
+
+              <DetailBlock
+                title="Recommended Action"
+                value={
+                  selectedFinding.recommendation ||
+                  "No recommendation provided."
+                }
+              />
+
+
+              <div className="finding-source-detail">
+
+                <div>
+
+                  <span>
+                    Source Document
+                  </span>
+
+                  <strong>
+                    {selectedFinding.source_document ||
+                      "Not specified"}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    Page
+                  </span>
+
+                  <strong>
+                    {selectedFinding.page_number ||
+                      "—"}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    Inspection
+                  </span>
+
+                  <strong>
+                    {selectedFinding.inspection_title}
+                  </strong>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div className="modal-actions">
+
+              <button
+                className="btn btn-secondary"
+                onClick={() =>
+                  setSelectedFinding(null)
+                }
+              >
+
+                Close
+
+              </button>
+
+            </div>
 
           </div>
 
-        )}
+        </div>
+
+      )}
+
+    </div>
+  );
+}
+
+
+/* =========================================================
+   STAT
+========================================================= */
+
+function FindingStat({
+  label,
+  value,
+  icon: Icon,
+}) {
+
+  return (
+    <div className="card finding-stat">
+
+      <div className="finding-stat-icon">
+
+        <Icon size={17} />
+
+      </div>
+
+      <div>
+
+        <div className="stat-label">
+          {label}
+        </div>
+
+        <div className="finding-stat-value">
+          {value}
+        </div>
 
       </div>
 
@@ -103,19 +969,76 @@ export default function Findings() {
 }
 
 
-function Mini({
+/* =========================================================
+   SEVERITY BADGE
+========================================================= */
+
+function SeverityBadge({
+  severity,
+}) {
+
+  const value =
+    (
+      severity ||
+      "LOW"
+    ).toUpperCase();
+
+  return (
+    <span
+      className={`severity-badge severity-${value.toLowerCase()}`}
+    >
+      {value}
+    </span>
+  );
+}
+
+
+/* =========================================================
+   STATUS BADGE
+========================================================= */
+
+function StatusBadge({ status }) {
+
+  const value =
+    (status || "OPEN").toUpperCase();
+
+  let className = "finding-status open";
+
+  if (value === "RESOLVED") {
+    className = "finding-status resolved";
+  }
+
+  if (value === "IN PROGRESS") {
+    className = "finding-status progress";
+  }
+
+  return (
+    <span className={className}>
+      {value === "IN PROGRESS"
+        ? "IN PROGRESS"
+        : value}
+    </span>
+  );
+}
+
+
+/* =========================================================
+   DETAIL BLOCK
+========================================================= */
+
+function DetailBlock({
   title,
   value,
 }) {
 
   return (
-    <div className="stat-card">
+    <div className="detail-block">
 
-      <div className="stat-label">
+      <div className="detail-block-title">
         {title}
       </div>
 
-      <div className="stat-value">
+      <div className="detail-block-text">
         {value}
       </div>
 

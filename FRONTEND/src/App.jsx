@@ -18,6 +18,7 @@ import Evidence from "./pages/Evidence";
 import Reports from "./pages/Reports";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import InspectionDetails from "./pages/InspectionDetails";
 
 import "./App.css";
 
@@ -98,6 +99,11 @@ function Layout() {
                 />
               }
             />
+
+              <Route
+                path="/inspections/:id"
+                element={<InspectionDetails />}
+              />
 
           </Routes>
         </main>
