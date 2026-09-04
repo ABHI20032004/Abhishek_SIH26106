@@ -447,3 +447,91 @@ export async function getDashboardStats() {
   return data;
 }
 
+
+
+// =====================================================
+// EVIDENCE
+// =====================================================
+
+export async function getEvidenceByFinding(
+  findingId
+) {
+  const response = await fetch(
+    `${API_URL}/api/evidence/finding/${findingId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to fetch evidence"
+    );
+  }
+
+  return response.json();
+}
+
+
+export async function createEvidence(
+  findingId,
+  file,
+  description = ""
+) {
+  const formData = new FormData();
+
+  formData.append(
+    "finding_id",
+    findingId
+  );
+
+  formData.append(
+    "file",
+    file
+  );
+
+  formData.append(
+    "description",
+    description
+  );
+
+  const response = await fetch(
+    `${API_URL}/api/evidence/`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+
+    const error =
+      await response
+        .json()
+        .catch(() => ({}));
+
+    throw new Error(
+      error.detail ||
+      "Failed to create evidence"
+    );
+  }
+
+  return response.json();
+}
+
+
+export async function deleteEvidence(
+  evidenceId
+) {
+  const response = await fetch(
+    `${API_URL}/api/evidence/${evidenceId}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to delete evidence"
+    );
+  }
+
+  return response.json();
+}

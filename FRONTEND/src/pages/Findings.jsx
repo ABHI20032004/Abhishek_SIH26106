@@ -1,3 +1,4 @@
+
 import {
   AlertTriangle,
   CheckCircle2,
@@ -6,6 +7,10 @@ import {
   Search,
   ShieldAlert,
   X,
+  Upload,
+  Trash2,
+  Image,
+  File,
 } from "lucide-react";
 
 import {
@@ -39,6 +44,21 @@ export default function Findings() {
 
   const [selectedFinding, setSelectedFinding] =
     useState(null);
+
+    const [evidence, setEvidence] =
+  useState([]);
+
+const [evidenceLoading, setEvidenceLoading] =
+  useState(false);
+
+const [evidenceUploading, setEvidenceUploading] =
+  useState(false);
+
+const [evidenceDescription, setEvidenceDescription] =
+  useState("");
+
+const [evidenceFile, setEvidenceFile] =
+  useState(null);
 
 
   /* =====================================================
@@ -209,6 +229,211 @@ async function handleCreateAction() {
   } finally {
     setActionSaving(false);
   }
+}
+
+/* =====================================================
+   EVIDENCE
+===================================================== */
+
+async function loadEvidence(findingId) {
+
+  try {
+
+    setEvidenceLoading(true);
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/api/evidence/finding/${findingId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "Failed to load evidence"
+      );
+    }
+
+    const data =
+      await response.json();
+
+    setEvidence(
+      data.evidence || []
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Failed to load evidence:",
+      error
+    );
+
+    setEvidence([]);
+
+  } finally {
+
+    setEvidenceLoading(false);
+
+  }
+}
+
+
+async function handleUploadEvidence() {
+
+  if (!selectedFinding) return;
+
+  if (!evidenceFile) {
+
+    alert(
+      "Please select an evidence file"
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    setEvidenceUploading(true);
+
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      "finding_id",
+      selectedFinding.id
+    );
+
+    formData.append(
+      "description",
+      evidenceDescription
+    );
+
+    formData.append(
+      "file",
+      evidenceFile
+    );
+
+
+    const response =
+      await fetch(
+        "http://127.0.0.1:8000/api/evidence/",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+
+    if (!response.ok) {
+
+      const errorData =
+        await response.json()
+          .catch(() => ({}));
+
+      throw new Error(
+        errorData.detail ||
+        "Failed to upload evidence"
+      );
+
+    }
+
+
+    setEvidenceFile(null);
+
+    setEvidenceDescription("");
+
+
+    const fileInput =
+      document.getElementById(
+        "evidence-file-input"
+      );
+
+    if (fileInput) {
+      fileInput.value = "";
+    }
+
+
+    await loadEvidence(
+      selectedFinding.id
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Evidence upload failed:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Failed to upload evidence"
+    );
+
+  } finally {
+
+    setEvidenceUploading(false);
+
+  }
+
+}
+
+
+async function handleDeleteEvidence(
+  evidenceId
+) {
+
+  if (
+    !window.confirm(
+      "Delete this evidence?"
+    )
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const response =
+      await fetch(
+        `http://127.0.0.1:8000/api/evidence/${evidenceId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Failed to delete evidence"
+      );
+
+    }
+
+
+    setEvidence((current) =>
+      current.filter(
+        (item) =>
+          item.id !== evidenceId
+      )
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Evidence delete failed:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Failed to delete evidence"
+    );
+
+  }
+
 }
 
 
@@ -683,16 +908,19 @@ async function handleStatusChange(
                         `${finding.inspection_id}-${index}`
                       }
                       className="finding-row"
-                      onClick={() =>
-                        setSelectedFinding(
-                          finding
-                        )
-                      }
+                        onClick={() => {
+                        setSelectedFinding(finding);
+                        loadEvidence(finding.id);
+                      }}
                     >
 
                       <td>
 
                         <div className="finding-table-title">
+
+                          <span className="finding-id ">
+                            ID: #{finding.id}
+                          </span>
 
                           <strong>
                             {finding.title ||
@@ -925,6 +1153,200 @@ async function handleStatusChange(
                   "No recommendation provided."
                 }
               />
+
+
+              {/* =================================================
+    EVIDENCE
+================================================= */}
+
+          <div className="evidence-section">
+
+            <div className="detail-block-title">
+              EVIDENCE
+            </div>
+
+
+            {/* Upload */}
+
+            <div className="evidence-upload-box">
+
+              <div className="evidence-upload-row">
+
+                <label
+                  htmlFor="evidence-file-input"
+                  className="btn btn-secondary"
+                >
+
+                  <Upload size={13} />
+
+                  Select Evidence
+
+                </label>
+
+
+                <input
+                  id="evidence-file-input"
+                  type="file"
+                  style={{
+                    display: "none",
+                  }}
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={(event) =>
+                    setEvidenceFile(
+                      event.target.files?.[0] ||
+                      null
+                    )
+                  }
+                />
+
+
+                {evidenceFile && (
+
+                  <span className="evidence-file-name">
+
+                    {evidenceFile.name}
+
+                  </span>
+
+                )}
+
+              </div>
+
+
+              <textarea
+                placeholder="Describe this evidence..."
+                value={
+                  evidenceDescription
+                }
+                onChange={(event) =>
+                  setEvidenceDescription(
+                    event.target.value
+                  )
+                }
+                rows={2}
+              />
+
+
+              <button
+                className="btn btn-primary"
+                onClick={
+                  handleUploadEvidence
+                }
+                disabled={
+                  evidenceUploading ||
+                  !evidenceFile
+                }
+              >
+
+                <Upload size={13} />
+
+                {evidenceUploading
+                  ? "Uploading..."
+                  : "Upload Evidence"}
+
+              </button>
+
+            </div>
+
+
+            {/* Existing Evidence */}
+
+            <div className="evidence-list">
+
+              {evidenceLoading ? (
+
+                <div className="evidence-empty">
+
+                  Loading evidence...
+
+                </div>
+
+              ) : evidence.length === 0 ? (
+
+                <div className="evidence-empty">
+
+                  <FileText size={17} />
+
+                  <span>
+                    No evidence attached.
+                  </span>
+
+                </div>
+
+              ) : (
+
+                evidence.map((item) => (
+
+                  <div
+                    className="evidence-item"
+                    key={item.id}
+                  >
+
+                    <div className="evidence-icon">
+
+                      {item.file_type?.startsWith(
+                        "image/"
+                      ) ? (
+
+                        <Image size={16} />
+
+                      ) : (
+
+                        <File size={16} />
+
+                      )}
+
+                    </div>
+
+
+                    <div className="evidence-info">
+
+                      <strong>
+
+                        {item.file_path
+                          ?.split("\\")
+                          .pop()
+                          ?.split("/")
+                          .pop() ||
+                          "Evidence"}
+
+                      </strong>
+
+
+                      {item.description && (
+
+                        <span>
+                          {item.description}
+                        </span>
+
+                      )}
+
+                    </div>
+
+
+                    <button
+                      className="evidence-delete"
+                      onClick={() =>
+                        handleDeleteEvidence(
+                          item.id
+                        )
+                      }
+                      title="Delete evidence"
+                    >
+
+                      <Trash2 size={14} />
+
+                    </button>
+
+                  </div>
+
+                ))
+
+              )}
+
+            </div>
+
+          </div>
 
 
               <div className="finding-source-detail">

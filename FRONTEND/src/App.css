@@ -3906,3 +3906,198 @@ button {
   }
 
 }
+
+
+/* =====================================================
+   EVIDENCE
+===================================================== */
+
+.evidence-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.evidence-upload-box {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.evidence-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.evidence-upload-box textarea {
+  width: 100%;
+  margin-top: 10px;
+  resize: vertical;
+  min-height: 55px;
+  box-sizing: border-box;
+}
+
+.evidence-file-name {
+  font-size: 10px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-upload-box .btn {
+  margin-top: 10px;
+}
+
+.evidence-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.evidence-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.evidence-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.evidence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.evidence-info strong {
+  font-size: 11px;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-info span {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.evidence-delete {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.evidence-delete:hover {
+  color: #dc2626;
+}
+
+.evidence-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 16px;
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+
+/* =====================================================
+   EVIDENCE PAGE
+===================================================== */
+
+.evidence-page-upload {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.evidence-page-upload textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 10px;
+  resize: vertical;
+  min-height: 55px;
+}
+
+.evidence-page-upload .btn-primary {
+  margin-top: 10px;
+}
+
+.evidence-page-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.evidence-page-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.evidence-page-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.evidence-page-info strong {
+  font-size: 12px;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-page-info span {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.evidence-page-info p {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: #475569;
+}
+
+.evidence-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.evidence-file-name {
+  font-size: 10px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
